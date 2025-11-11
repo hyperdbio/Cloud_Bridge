@@ -2,14 +2,10 @@ import { useCallback, useMemo, useState } from 'react'
 import { guidanceContent } from '../../data/serviceGuidance'
 import { ChatbotInput } from '../../components/chatbot/ChatbotInput'
 import { ChatbotGuidance } from '../../components/chatbot/ChatbotGuidance'
-import { CategoryGrid } from '../../components/category/CategoryGrid'
-import ServiceDetailContent from '../../components/service/ServiceDetailContent'
 import { LeftNavRail } from '../../components/navigation/LeftNavRail'
 import {
   buildGuidanceSearchSuggestion,
-  getCategoryById,
   getServiceDetail,
-  getServicesByCategory,
   searchServices,
 } from '../../utils/guidanceSearch'
 import type { ServiceGuidanceDetail } from '../../types/guidance'
@@ -23,37 +19,18 @@ export const HomePage = () => {
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<ChatbotStatus>('idle')
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null)
-  const [expandedServiceId, setExpandedServiceId] = useState<string | null>(null)
 
   const detail: ServiceGuidanceDetail | null = useMemo(() => {
     if (!selectedServiceId) return null
     return getServiceDetail(selectedServiceId, guidanceContent)
   }, [selectedServiceId])
 
-  const expandedDetail: ServiceGuidanceDetail | null = useMemo(() => {
-    if (!expandedServiceId) return null
-    return getServiceDetail(expandedServiceId, guidanceContent)
-  }, [expandedServiceId])
-
-  const expandedCategory = useMemo(() => {
-    if (!expandedDetail || expandedDetail.categories.length === 0) return null
-    const primary = expandedDetail.categories[0]
-    return getCategoryById(primary.id, guidanceContent)
-  }, [expandedDetail])
-
-  const expandedRelatedServices = useMemo(() => {
-    if (!expandedDetail || !expandedCategory) return []
-    return getServicesByCategory(expandedCategory.id, guidanceContent).filter(
-      (service) => service.id !== expandedDetail.id,
-    )
-  }, [expandedDetail, expandedCategory])
-
   const handleSearch = useCallback(
     (input: string) => {
       if (!input) {
         setStatus('idle')
         setSelectedServiceId(null)
-            return
+        return
       }
 
       const found = searchServices(input, guidanceContent)
@@ -74,14 +51,6 @@ export const HomePage = () => {
     setQuery('')
     setStatus('idle')
     setSelectedServiceId(null)
-  }, [])
-
-  const handleCategorySelect = useCallback((serviceId: string) => {
-    setExpandedServiceId((prev) => (prev === serviceId ? null : serviceId))
-  }, [])
-
-  const handleInlineReset = useCallback(() => {
-    setExpandedServiceId(null)
   }, [])
 
   return (
@@ -142,46 +111,6 @@ export const HomePage = () => {
               onReset={handleReset}
             />
           </section>
-
-          {/* 생애주기 섹션: 관련 서비스로 빠르게 이동할 수 있는 카테고리를 보여줍니다.
-              카테고리 순서를 수정하려면 guidanceContent.categories 데이터를 업데이트하세요. */}
-          <section
-            id="life-events"
-            data-section
-            data-title="생애주기"
-            className={styles.categories}
-            style={{ scrollMarginTop: '80px' }}
-          >
-            <h2>생애주기별 공공복지 서비스</h2>
-            <p className={styles.helperText}>
-              상황에 맞는 카테고리를 선택하면 관련 서비스를 살펴볼 수 있습니다.
-            </p>
-            <CategoryGrid
-              categories={guidanceContent.categories}
-              services={guidanceContent.services}
-              onSelectService={handleCategorySelect}
-              selectedServiceId={expandedServiceId}
-            />
-          </section>
-
-          {expandedDetail && (
-            <section
-              id="selected-service"
-              data-section
-              data-title="선택한 서비스"
-              className={styles.selectedService}
-              style={{ scrollMarginTop: '80px' }}
-            >
-              <ServiceDetailContent
-                detail={expandedDetail}
-                relatedCategory={expandedCategory}
-                relatedServices={expandedRelatedServices}
-                variant="inline"
-                onDismiss={handleInlineReset}
-                onSelectRelated={handleCategorySelect}
-              />
-            </section>
-          )}
           
         </div>
       </div>

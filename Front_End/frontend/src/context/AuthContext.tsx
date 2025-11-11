@@ -1,30 +1,8 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react'
-
-type UserProfile = {
-  name: string
-  phone: string
-}
-
-type AuthContextValue = {
-  user: UserProfile | null
-  registeredProfile: UserProfile | null
-  register: (profile: UserProfile) => void
-  login: (profile: UserProfile) => void
-  logout: () => void
-}
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { AuthContext, type UserProfile } from './AuthContextBase'
 
 const REGISTER_KEY = 'cloudBridgeRegisteredUser'
 const SESSION_KEY = 'cloudBridgeSessionUser'
-
-const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null)
@@ -102,11 +80,3 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
-
-export const useAuth = () => {
-  const context = useContext(AuthContext)
-  if (!context) throw new Error('useAuth must be used within an AuthProvider')
-  return context
-}
-
-export type { UserProfile }

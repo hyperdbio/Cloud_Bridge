@@ -1,7 +1,7 @@
 import { type FormEvent, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import styles from './AuthPage.module.css'
-import { useAuth } from '../../context/AuthContext'
+import { useAuth } from '../../context/useAuth'
 import { isValidPhoneNumber, normalizePhoneNumber } from '../../utils/phoneVerification'
 import { postJson } from '../../utils/api'
 
@@ -9,7 +9,7 @@ type Alert = { type: 'success' | 'error'; text: string }
 
 export const LoginPage = () => {
   const navigate = useNavigate()
-  const { user, registeredProfile, login } = useAuth()
+  const { user, login } = useAuth()
 
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
@@ -36,11 +36,6 @@ export const LoginPage = () => {
   }
 
   const handleSendCode = async () => {
-    if (!registeredProfile) {
-      setAlert({ type: 'error', text: '먼저 회원가입을 진행해주세요.' })
-      return
-    }
-
     const trimmedName = name.trim()
     const normalizedPhone = normalizePhoneNumber(phone)
 
@@ -51,17 +46,6 @@ export const LoginPage = () => {
 
     if (!isValidPhoneNumber(normalizedPhone)) {
       setAlert({ type: 'error', text: '휴대전화 번호를 정확히 입력해주세요.' })
-      return
-    }
-
-    if (
-      trimmedName !== registeredProfile.name ||
-      normalizedPhone !== registeredProfile.phone
-    ) {
-      setAlert({
-        type: 'error',
-        text: '가입된 이름과 휴대전화 번호가 일치하지 않습니다.',
-      })
       return
     }
 
@@ -109,13 +93,8 @@ export const LoginPage = () => {
     }
   }
 
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
-    if (!registeredProfile) {
-      setAlert({ type: 'error', text: '먼저 회원가입을 진행해주세요.' })
-      return
-    }
-
     const trimmedName = name.trim()
     const normalizedPhone = normalizePhoneNumber(phone)
 
@@ -135,11 +114,25 @@ export const LoginPage = () => {
     }
 
     setSubmitting(true)
-    login({ name: trimmedName, phone: normalizedPhone })
-    setAlert({ type: 'success', text: `${trimmedName}님 환영합니다. 홈으로 이동합니다.` })
-    setTimeout(() => {
-      navigate('/')
-    }, 1000)
+    try {
+      const response = await postJson<{ memberId: string; name: string; phone: string }>(
+        '/api/auth/login',
+        { name: trimmedName, phone: normalizedPhone },
+      )
+      login({ name: response.name, phone: response.phone })
+      setAlert({ type: 'success', text: `${response.name}님 환영합니다. 홈으로 이동합니다.` })
+      setTimeout(() => {
+        navigate('/')
+      }, 1000)
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : '로그인 과정에서 문제가 발생했습니다. 다시 시도해주세요.'
+      setAlert({ type: 'error', text: message })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (

@@ -1,10 +1,10 @@
 /**
  * 백엔드(Spring Boot) REST API와 통신하는 공통 함수입니다.
  * BASE_URL은 Vite 환경 변수(VITE_API_BASE_URL)로 주입받고,
- * 값이 없으면 개발 환경 기본값(127.0.0.1:5180; Vite dev 서버)을 사용합니다.
+ * 값이 없으면 개발 환경 기본값(127.0.0.1:8081; Spring Boot 서버)을 사용합니다.
  */
-const baseFromEnv = import.meta.env.VITE_API_BASE_URL?.trim();
-const BASE_URL = baseFromEnv || 'http://127.0.0.1:5180';
+const baseFromEnv = import.meta.env.VITE_API_BASE_URL?.trim().replace(/\/+$/, '')
+const BASE_URL = baseFromEnv || 'http://127.0.0.1:8081'
 
 type JsonValue = Record<string, unknown> | JsonValue[] | string | number | boolean | null;
 
@@ -17,7 +17,8 @@ export async function postJson<TResponse>(
   path: string,
   body: Record<string, unknown>,
 ): Promise<TResponse> {
-  const response = await fetch(`${BASE_URL}${path}`, {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  const response = await fetch(`${BASE_URL}${normalizedPath}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -35,7 +36,7 @@ export async function postJson<TResponse>(
     if (errorBody?.message && typeof errorBody.message === 'string') {
       message = errorBody.message;
     }
-  } catch (error) {
+  } catch {
     // JSON 파싱이 실패하면 statusText만 사용
   }
 

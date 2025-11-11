@@ -72,4 +72,4 @@ export const getCategoryById = (categoryId: string, content: GuidanceContent = g
 export const buildGuidanceSearchSuggestion = (query: string) =>
   query.trim()
     ? `'${query}' 관련 민원 안내를 찾았어요.`
-    : '어떤 민원을 도와드릴까요? 예: 기초연금 신청'
+    : '어떤 민원을 도와드릴까요? 예: 내 생애 최초 주택 자금 대출'

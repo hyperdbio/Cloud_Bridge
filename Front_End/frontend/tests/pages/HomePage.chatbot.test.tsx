@@ -16,16 +16,18 @@ describe('HomePage chatbot guidance', () => {
   test('guides residents with online steps after entering a known service', async () => {
     renderHome()
     const input = screen.getByLabelText('어떤 민원을 도와드릴까요?')
-    fireEvent.change(input, { target: { value: '기초연금 신청' } })
+    fireEvent.change(input, { target: { value: '내 생애 최초 주택 자금 대출' } })
     fireEvent.submit(input.closest('form')!)
 
     await waitFor(() => {
-      expect(screen.getAllByRole('heading', { name: /기초연금 신청/ }).length).toBeGreaterThan(0)
+      expect(
+        screen.getAllByRole('heading', { name: /내 생애 최초 주택 자금 대출/ }).length,
+      ).toBeGreaterThan(0)
     })
 
     expect(screen.getByRole('heading', { name: /온라인 신청 단계/ })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /방문 신청 단계/ })).toBeInTheDocument()
-    expect(screen.getAllByText(/주민등록증 사본/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/주민등록증 · 주민등록등본/).length).toBeGreaterThan(0)
   })
 
   test('offers helpful message when no service is found', async () => {

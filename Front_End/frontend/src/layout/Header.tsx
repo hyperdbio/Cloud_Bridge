@@ -1,5 +1,5 @@
 ﻿import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 import styles from './Header.module.css'
 import logo from '../img/logo_face.png'
 
@@ -24,8 +24,7 @@ export const Header = () => {
           </div>
         </Link>
         <nav aria-label="주요 메뉴" className={styles.nav}>
-          <a href="#chatbot"></a>
-          <a href="#life-events"></a>
+          <a href="#chatbot">챗봇 영역</a>
         </nav>
         <div className={styles.authControls}>
           {user ? (

@@ -37,7 +37,7 @@ export const ChatMessengerInput = ({
           id={inputId}
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          placeholder="예: 기초연금 신청"
+          placeholder="예: 내 생애 최초 주택 자금 대출"
           aria-describedby={helperId}
         />
         <button type="submit" className={styles.submit}>

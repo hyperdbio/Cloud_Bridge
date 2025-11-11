@@ -1,7 +1,7 @@
 import { type FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import styles from './AuthPage.module.css'
-import { useAuth } from '../../context/AuthContext'
+import { useAuth } from '../../context/useAuth'
 import { isValidPhoneNumber, normalizePhoneNumber } from '../../utils/phoneVerification'
 import { postJson } from '../../utils/api'
 

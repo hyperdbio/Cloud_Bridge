@@ -1,8 +1,16 @@
+import { useEffect, useState } from 'react'
 import type {
   Category,
   ServiceGuidance,
   ServiceGuidanceDetail,
 } from '../../types/guidance'
+import {
+  CASES_STORAGE_KEY,
+  CASES_UPDATED_EVENT,
+  getCaseByServiceId,
+  type CaseTrackerStatus,
+  upsertCase,
+} from '../../utils/caseTracker'
 import { ServiceSummaryCard } from './ServiceSummaryCard'
 import styles from './ServiceDetailContent.module.css'
 
@@ -24,6 +32,88 @@ export const ServiceDetailContent = ({
   onSelectRelated,
 }: ServiceDetailContentProps) => {
   const TitleTag: keyof JSX.IntrinsicElements = variant === 'inline' ? 'h2' : 'h1'
+  const storageKey = `document-checklist:${detail.id}`
+  const [completedDocs, setCompletedDocs] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') return new Set()
+    try {
+      const saved = window.localStorage.getItem(storageKey)
+      if (!saved) return new Set()
+      const parsed: string[] = JSON.parse(saved)
+      return new Set(parsed)
+    } catch {
+      return new Set()
+    }
+  })
+
+  const [caseStatus, setCaseStatus] = useState<CaseTrackerStatus>(() => {
+    const existing = getCaseByServiceId(detail.id)
+    return existing?.status ?? 'idle'
+  })
+
+  useEffect(() => {
+    const entry = getCaseByServiceId(detail.id)
+    setCaseStatus(entry?.status ?? 'idle')
+  }, [detail.id])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const saved = window.localStorage.getItem(storageKey)
+      if (!saved) {
+        setCompletedDocs(new Set())
+        return
+      }
+      const parsed: string[] = JSON.parse(saved)
+      setCompletedDocs(new Set(parsed))
+    } catch {
+      setCompletedDocs(new Set())
+    }
+  }, [storageKey])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const payload = JSON.stringify(Array.from(completedDocs))
+    window.localStorage.setItem(storageKey, payload)
+  }, [completedDocs, storageKey])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const syncStatus = () => {
+      const entry = getCaseByServiceId(detail.id)
+      setCaseStatus(entry?.status ?? 'idle')
+    }
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === CASES_STORAGE_KEY) syncStatus()
+    }
+
+    window.addEventListener(CASES_UPDATED_EVENT, syncStatus as EventListener)
+    window.addEventListener('storage', handleStorage)
+
+    return () => {
+      window.removeEventListener(CASES_UPDATED_EVENT, syncStatus as EventListener)
+      window.removeEventListener('storage', handleStorage)
+    }
+  }, [detail.id])
+
+  const toggleDocument = (docId: string) => {
+    setCompletedDocs((prev) => {
+      const next = new Set(prev)
+      if (next.has(docId)) {
+        next.delete(docId)
+      } else {
+        next.add(docId)
+      }
+      return next
+    })
+  }
+
+  const handleStartCase = () => {
+    // TODO: 백엔드에 "나의 민원" 진행중 케이스를 생성하는 API를 연결하세요.
+    upsertCase(detail)
+    setCaseStatus('in-progress')
+  }
 
   const documentNameMap = new Map(
     detail.documentChecklistDetails.map((doc) => [doc.id, doc.name]),
@@ -32,6 +122,12 @@ export const ServiceDetailContent = ({
     documentIds.map((id) => documentNameMap.get(id) ?? id).join(', ')
 
   const headerMetaVisible = detail.lastReviewed || onDismiss
+  const statusLabelMap: Record<CaseTrackerStatus, string> = {
+    idle: '미진행',
+    'in-progress': '진행 중',
+    completed: '완료',
+  }
+  const statusLabel = statusLabelMap[caseStatus] ?? '미진행'
 
   const content = (
     <article className={styles.page}>
@@ -110,9 +206,27 @@ export const ServiceDetailContent = ({
         <h2>필수 서류 체크리스트</h2>
         <div className={styles.documentList}>
           {detail.documentChecklistDetails.map((document) => (
-            <article key={document.id} className={styles.documentCard}>
-              <h3>{document.name}</h3>
-              <p className={styles.meta}>{document.issuingAuthority}</p>
+            <article
+              key={document.id}
+              className={`${styles.documentCard} ${
+                completedDocs.has(document.id) ? styles.documentCardCompleted : ''
+              }`}
+            >
+              <div className={styles.documentHeading}>
+                <div>
+                  <h3>{document.name}</h3>
+                  <p className={styles.meta}>{document.issuingAuthority}</p>
+                </div>
+                <label className={styles.checkControl}>
+                  <input
+                    type="checkbox"
+                    checked={completedDocs.has(document.id)}
+                    onChange={() => toggleDocument(document.id)}
+                    aria-label={`${document.name} 준비 완료`}
+                  />
+                  <span>완료</span>
+                </label>
+              </div>
               {document.purpose && <p>{document.purpose}</p>}
               <p>
                 발급 가능: {document.availableFormats.join(', ')}
@@ -130,6 +244,27 @@ export const ServiceDetailContent = ({
               {document.preparationNotes && <p>{document.preparationNotes}</p>}
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <div className={styles.actionCard}>
+          <div>
+            <h2>신청 진행 상태</h2>
+            <p className={styles.actionDescription}>
+              진행하기를 누르면 체크리스트를 활용하여 일정을 관리할 수 있습니다.
+            </p>
+            <span className={styles.statusBadge}>현재 상태: {statusLabel}</span>
+          </div>
+          <div className={styles.actionButtons}>
+            <button
+              type="button"
+              className={styles.primaryAction}
+              onClick={handleStartCase}
+            >
+              진행하기
+            </button>
+          </div>
         </div>
       </section>
 

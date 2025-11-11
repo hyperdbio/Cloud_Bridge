@@ -35,6 +35,16 @@
     gap: 8px;
   }
 
+  .selectControl {
+    border-radius: 12px;
+    border: 1px solid #cbd5f5;
+    padding: 10px 14px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+    background: #fff;
+  }
+
   .filterButtons {
     display: flex;
     gap: 8px;
@@ -92,15 +102,47 @@
     font-weight: 600;
   }
 
-  .mapHelper {
-    margin: 0;
-    color: #475569;
-    font-size: 0.9rem;
-  }
+.mapHelper {
+  margin: 0;
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.mapPlaceholder,
+.mapError {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
+.mapError {
+  color: #b91c1c;
+}
 
   .listSection {
     display: grid;
     gap: 16px;
+    text-align: center;
+    font-size: 30px;
+  }
+
+  .regionSummary {
+    padding: 16px 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #f8fafc;
+  }
+
+  .regionSummary h2 {
+    margin: 0 0 6px;
+  }
+
+  .regionSummary p {
+    margin: 0;
+    color: #475569;
   }
 
   .officeCard {
@@ -164,6 +206,7 @@
     color: #475569;
     display: grid;
     gap: 8px;
+    font-size: 15px;
   }
 
   /* 작은 화면 대응 */
